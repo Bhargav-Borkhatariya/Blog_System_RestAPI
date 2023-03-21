@@ -6,6 +6,7 @@ from authentication.views import (
     EmailLoginAPIView,
     SendForgetPasswordOtpAPIView,
     VerifyforgetPassOtpView,
+    UpdatePasswordAPIView,
 )
 
 urlpatterns = [
@@ -38,4 +39,10 @@ urlpatterns = [
     path("verify-forgetotp/",
          VerifyforgetPassOtpView.as_view(),
          name="verify-forgetotp"),
+
+    # Update Password API endpoint
+    path("update-password/",
+         UpdatePasswordAPIView.as_view(),
+         name="forget-password"),
+
 ]

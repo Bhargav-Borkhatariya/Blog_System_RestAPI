@@ -3,6 +3,7 @@ from authentication.views import (
     RegistrationAPIView,
     VerifyActivationOtpView,
     SendOtpAcivationAPIView,
+    EmailLoginAPIView,
 )
 
 urlpatterns = [
@@ -20,4 +21,9 @@ urlpatterns = [
     path("sendotp-activation/",
          SendOtpAcivationAPIView.as_view(),
          name="sendotp-activation"),
+
+    # Email Login API endpoint
+    path("email-login/",
+         EmailLoginAPIView.as_view(),
+         name="email-login"),
 ]

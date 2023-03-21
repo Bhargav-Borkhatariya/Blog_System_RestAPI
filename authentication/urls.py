@@ -4,6 +4,7 @@ from authentication.views import (
     VerifyActivationOtpView,
     SendOtpAcivationAPIView,
     EmailLoginAPIView,
+    SendForgetPasswordOtpAPIView,
 )
 
 urlpatterns = [
@@ -26,4 +27,9 @@ urlpatterns = [
     path("email-login/",
          EmailLoginAPIView.as_view(),
          name="email-login"),
+
+    # Forget Password API endpoint
+    path("sendotp-forget/",
+         SendForgetPasswordOtpAPIView.as_view(),
+         name="sendotp-forget"),
 ]

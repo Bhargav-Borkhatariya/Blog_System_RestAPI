@@ -8,7 +8,9 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
     HTTP_200_OK,
+    HTTP_404_NOT_FOUND,
 )
+from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import render_to_string
@@ -127,3 +129,51 @@ class VerifyActivationOtpView(APIView):
             "message": "OTP is Verified Successfully.",
             "data": {"token": token.key},
         }, status=HTTP_200_OK)
+
+
+class SendOtpAcivationAPIView(APIView):
+
+    def post(self, request):
+
+        email = request.data.get("email")
+
+        if email:
+            users = User.objects.filter(email=email)
+            if not users.exists():
+                return Response({
+                    "status": False,
+                    "message": "User does not exist",
+                    "data": None
+                }, status=HTTP_404_NOT_FOUND)
+
+            user = users.first()
+
+            # Delete any existing activation otp entry
+            Activationotp = ActivationOTP.objects.filter(user=user)
+            if Activationotp:
+                Activationotp.delete()
+
+            # Generate random OTP
+            otp = get_random_string(length=6, allowed_chars="0123456789")
+
+            # Send email with the authtoken and OTP to the user
+            email_subject = f"Activation OTP for the {user}"
+            email_body = render_to_string(
+                "activation.txt", {"user": user, "otp": otp}
+            )
+            email = EmailMessage(
+                email_subject,
+                email_body,
+                to=[user.email],
+            )
+            email.send()
+
+            # Save OTP to activation entry
+            Activationotp = ActivationOTP(user=user, otp=otp)
+            Activationotp.save()
+
+            return Response({
+                "status": True,
+                "message": "OTP sent successfully",
+                "data": None,
+            }, status=HTTP_200_OK)

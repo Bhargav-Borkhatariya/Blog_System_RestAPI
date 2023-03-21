@@ -1,3 +1,4 @@
+import authentication.utils.send_email as emailsender
 from authentication.models import ActivationOTP, ForgetPasswordOtp
 from authentication.serializers import UserSerializer
 from rest_framework.views import APIView
@@ -52,16 +53,7 @@ class RegistrationAPIView(APIView):
             ActivationOTP.objects.create(user=user, otp=otp)
 
             # Send email with OTP to the user
-            email_subject = f"Activation OTP for the {user}"
-            email_body = render_to_string(
-                "activation.txt", {"user": user, "otp": otp}
-            )
-            email = EmailMessage(
-                email_subject,
-                email_body,
-                to=[user.email],
-            )
-            email.send()
+            emailsender.send_activation_otp_email(user, otp)
 
             return Response({
                 "status": True,
@@ -161,17 +153,8 @@ class SendOtpAcivationAPIView(APIView):
             # Generate random OTP
             otp = get_random_string(length=6, allowed_chars="0123456789")
 
-            # Send email with the authtoken and OTP to the user
-            email_subject = f"Activation OTP for the {user}"
-            email_body = render_to_string(
-                "activation.txt", {"user": user, "otp": otp}
-            )
-            email = EmailMessage(
-                email_subject,
-                email_body,
-                to=[user.email],
-            )
-            email.send()
+            # Send email with OTP to the user
+            emailsender.send_activation_otp_email(user, otp)
 
             # Save OTP to activation entry
             Activationotp = ActivationOTP(user=user, otp=otp)
@@ -285,17 +268,8 @@ class SendForgetPasswordOtpAPIView(APIView):
                 # Generate random OTP
                 otp = get_random_string(length=6, allowed_chars="0123456789")
 
-                # Send email with the authtoken and OTP to the user
-                email_subject = f"Forget Pass OTP for the {user}"
-                email_body = render_to_string(
-                    "forget_pass.txt", {"user": user, "otp": otp}
-                )
-                email = EmailMessage(
-                    email_subject,
-                    email_body,
-                    to=[user.email],
-                )
-                email.send()
+                # Send email with OTP to the user
+                emailsender.send_forget_password_otp_email(user, otp)
 
                 # Save OTP to forget password entry
                 forget_password = ForgetPasswordOtp(user=user, otp=otp)

@@ -9,6 +9,7 @@ from rest_framework.status import (
     HTTP_401_UNAUTHORIZED,
     HTTP_200_OK,
     HTTP_404_NOT_FOUND,
+    HTTP_403_FORBIDDEN,
 )
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
@@ -177,3 +178,68 @@ class SendOtpAcivationAPIView(APIView):
                 "message": "OTP sent successfully",
                 "data": None,
             }, status=HTTP_200_OK)
+
+
+class EmailLoginAPIView(APIView):
+    """
+    API View for user email-based login.
+    """
+
+    def post(self, request):
+        """
+        Authenticate a user and generate a new authentication token by
+        accepting user email and password.
+
+        Parameters:
+        request (Request): The incoming request object
+
+        Returns:
+        Response: JSON response containing the authentication token
+            if successful.
+            Error response if email or password is missing or invalid.
+        """
+        email = request.data.get("email")
+        password = request.data.get("password")
+        if email and password:
+            users = User.objects.filter(email=email)
+            if not users.exists():
+                return Response({
+                    "status": False,
+                    "message": "User does not exist",
+                    "data": None
+                }, status=HTTP_404_NOT_FOUND,)
+
+            user = users.first()
+            if user.check_password(password):
+                if user.is_active:
+                    # Delete the old auth token
+                    token = Token.objects.filter(user=user).first()
+                    if token:
+                        token.delete()
+
+                    # Generate auth token and return it in response
+                    token = Token.objects.create(user=user)
+
+                    return Response({
+                        "status": True,
+                        "message": "User Login successfully",
+                        "data": {"token": token.key},
+                    }, status=HTTP_200_OK)
+                else:
+                    return Response({
+                        "status": False,
+                        "message": "User account is not active",
+                        "data": None,
+                    }, status=HTTP_403_FORBIDDEN)
+            else:
+                return Response({
+                    "status": False,
+                    "message": "Invalid email or password",
+                    "data": None,
+                }, status=HTTP_401_UNAUTHORIZED)
+        else:
+            return Response({
+                    "status": False,
+                    "message": "Missing email or password field",
+                    "data": None,
+                }, status=HTTP_401_UNAUTHORIZED)

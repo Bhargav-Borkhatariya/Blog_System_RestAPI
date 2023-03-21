@@ -1,3 +1,4 @@
+import configuration.utils.send_email as emailsender
 from authentication.models import ActivationOTP
 from authentication.serializers import UserSerializer
 from rest_framework.views import APIView
@@ -6,8 +7,6 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
 )
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
 from rest_framework.permissions import AllowAny
 from django.utils.crypto import get_random_string
 
@@ -40,17 +39,8 @@ class RegistrationAPIView(APIView):
             otp = get_random_string(length=6, allowed_chars="0123456789")
             ActivationOTP.objects.create(user=user, otp=otp)
 
-            # Send email with the authtoken and OTP to the user
-            email_subject = f"Activation OTP for the {user}"
-            email_body = render_to_string(
-                "activation.txt", {"user": user, "otp": otp}
-            )
-            email = EmailMessage(
-                email_subject,
-                email_body,
-                to=[user.email],
-            )
-            email.send()
+            # Send email OTP to the user
+            emailsender.send_activation_otp_email(user, otp)
 
             return Response({
                 "status": True,

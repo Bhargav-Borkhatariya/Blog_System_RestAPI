@@ -1,4 +1,4 @@
-from authentication.models import ActivationOTP
+from authentication.models import ActivationOTP, ForgetPasswordOtp
 from authentication.serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
@@ -243,3 +243,68 @@ class EmailLoginAPIView(APIView):
                     "message": "Missing email or password field",
                     "data": None,
                 }, status=HTTP_401_UNAUTHORIZED)
+
+
+class SendForgetPasswordOtpAPIView(APIView):
+    """
+    API View for user password reset.
+    """
+
+    def post(self, request):
+        """
+        This code defines an API view for resetting user password.
+        When a POST request is received with an email address,
+        it generates a random OTP, sends it to the user's email address,
+        and saves the OTP in the ForgetPassword model.
+        If the email address is not provided or the user is inactive,
+        it returns an appropriate error message.
+        """
+        email = request.data.get("email")
+
+        if email:
+            users = User.objects.filter(email=email)
+            if not users.exists():
+                return Response({
+                    "status": False,
+                    "message": "User does not exist",
+                    "data": None
+                }, status=HTTP_404_NOT_FOUND)
+
+            user = users.first()
+            if user.is_active:
+
+                # Delete any existing forget password entry
+                forget_password = ForgetPasswordOtp.objects.filter(user=user)
+                if forget_password:
+                    forget_password.delete()
+
+                # Generate random OTP
+                otp = get_random_string(length=6, allowed_chars="0123456789")
+
+                # Send email with the authtoken and OTP to the user
+                email_subject = f"Forget Pass OTP for the {user}"
+                email_body = render_to_string(
+                    "forget_pass.txt", {"user": user, "otp": otp}
+                )
+                email = EmailMessage(
+                    email_subject,
+                    email_body,
+                    to=[user.email],
+                )
+                email.send()
+
+                # Save OTP to forget password entry
+                forget_password = ForgetPasswordOtp(user=user, otp=otp)
+                forget_password.save()
+
+                return Response({
+                    "status": True,
+                    "message": "OTP sent successfully",
+                    "data": None,
+                }, status=HTTP_200_OK)
+            else:
+                return Response({
+                    "status": False,
+                    "message": "User is not active",
+                    "data": None,
+                }, status=HTTP_403_FORBIDDEN)

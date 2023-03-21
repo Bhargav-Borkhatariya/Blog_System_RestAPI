@@ -2,6 +2,8 @@ from authentication.models import ActivationOTP, ForgetPasswordOtp
 from authentication.serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.status import (
@@ -13,6 +15,7 @@ from rest_framework.status import (
     HTTP_403_FORBIDDEN,
 )
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
 from django.core.mail import EmailMessage
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import render_to_string
@@ -365,4 +368,55 @@ class VerifyforgetPassOtpView(APIView):
             "status": True,
             "message": "OTP is Verified Successfully.",
             "data": {"token": token.key},
+        }, status=HTTP_200_OK)
+
+
+class UpdatePasswordAPIView(APIView):
+    """
+    API View for updating user password.
+    """
+
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        """
+        Update the user's password and generate a new authentication token.
+
+        Parameters:
+        request (Request): The incoming request object.
+
+        Returns:
+        Response: JSON response containing the new authentication token
+            if the password is updated successfully.
+            Error response if the new password is missing or invalid.
+        """
+
+        new_password = request.data.get("new_password")
+
+        if not new_password:
+            return Response({
+                "status": False,
+                "message": "Email and new_password required fields",
+                "data": None,
+            }, status=HTTP_400_BAD_REQUEST)
+
+        user = request.user
+
+        # Update user's password
+        user.password = make_password(new_password)
+        user.save()
+
+        # Delete the old auth token
+        token = Token.objects.filter(user=user).first()
+        if token:
+            token.delete()
+
+        # Generate and set new auth token for the user
+        new_token = Token.objects.create(user=user)
+
+        return Response({
+            "status": True,
+            "message": "Password updated successfully",
+            "data": {"token": new_token.key},
         }, status=HTTP_200_OK)

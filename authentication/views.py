@@ -17,9 +17,7 @@ from rest_framework.status import (
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from django.core.mail import EmailMessage
 from django.core.exceptions import ObjectDoesNotExist
-from django.template.loader import render_to_string
 from rest_framework.permissions import AllowAny
 from django.utils.crypto import get_random_string
 

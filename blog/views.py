@@ -1,7 +1,9 @@
 from rest_framework.views import APIView
+from blog.models import BlogPost
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
+    HTTP_200_OK,
 )
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -39,3 +41,23 @@ class CreateBlogAPIView(APIView):
                 "error": serializer.errors,
                 "data": None,
             }, status=HTTP_400_BAD_REQUEST)
+
+
+class BlogListAPIView(APIView):
+    """
+    API endpoint that allows to get all published blog posts.
+    """
+    def get(self, request):
+        """
+        Retrieve all published blog posts.
+
+        Returns:
+        Response: JSON response containing the serialized blog posts.
+        """
+        blogs = BlogPost.objects.filter(status="published")
+        serializer = BlogSerializer(blogs, many=True)
+        return Response({
+            "status": True,
+            "message": "All Published Post Are listed below",
+            "data": serializer.data,
+        }, status=HTTP_200_OK)

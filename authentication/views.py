@@ -2,6 +2,7 @@ from authentication.models import ActivationOTP, ForgetPasswordOtp
 from authentication.serializers import UserSerializer
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_201_CREATED,
@@ -308,3 +309,60 @@ class SendForgetPasswordOtpAPIView(APIView):
                     "message": "User is not active",
                     "data": None,
                 }, status=HTTP_403_FORBIDDEN)
+
+
+class VerifyforgetPassOtpView(APIView):
+    """
+    API View for verifying user OTP during password reset.
+    """
+
+    def post(self, request):
+        """
+        Verifies the OTP provided by the user for password reset.
+
+        Parameters:
+        request (HttpRequest): The HTTP request object containing the OTP.
+
+        Returns:
+        response (HttpResponse): A JSON response containing the status of
+                OTP verification and a new auth token if verification is successful.
+        """
+        otp = request.data.get("otp")
+
+        # Check if OTP is present in request data, if not then return an error response
+        if not otp:
+            return Response({
+                "status": False,
+                "message": "Missing required fields",
+                "data": None,
+            }, status=HTTP_400_BAD_REQUEST)
+
+        # Fetch user by OTP
+        try:
+            # Get the forget password entry with the provided OTP
+            forget_password = ForgetPasswordOtp.objects.get(otp=otp)
+        except ForgetPasswordOtp.DoesNotExist:
+            # If no forget password entry with the provided OTP is found, return an error response
+            raise NotFound({
+                "status": False,
+                "message": "OTP Verification failed",
+                "data": None,
+            })
+
+        # Get the user associated with the forget password entry
+        user = forget_password.user
+
+        # Delete the old auth token
+        token = Token.objects.filter(user=user).first()
+        if token:
+            token.delete()
+
+        # Generate a new auth token for the user
+        token = Token.objects.create(user=user)
+
+        # Return success response with the new auth token
+        return Response({
+            "status": True,
+            "message": "OTP is Verified Successfully.",
+            "data": {"token": token.key},
+        }, status=HTTP_200_OK)

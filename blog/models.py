@@ -51,3 +51,13 @@ class BlogPost(models.Model):
     def __str__(self):
         return self.title
 
+
+class Comment(models.Model):
+    author = models.CharField(max_length=255)
+    email = models.EmailField()
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    blog_post = models.ForeignKey(BlogPost, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.content

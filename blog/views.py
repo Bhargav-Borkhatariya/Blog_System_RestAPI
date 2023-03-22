@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from blog.serializers import BlogSerializer, CommentSerializer
+from django.db.models import Q
 
 
 class CreateBlogAPIView(APIView):
@@ -220,3 +221,23 @@ class CommentAPIView(APIView):
                 "error": serializer.errors,
                 "data": None,
             }, status=HTTP_400_BAD_REQUEST)
+
+
+class SearchAPIView(APIView):
+
+    def get(self, request):
+        search_query = request.data.get('search')
+        print(search_query)
+        if search_query:
+            blog_posts = BlogPost.objects.filter(
+                Q(title__icontains=search_query)
+                |
+                Q(category__name__icontains=search_query), deleted_at=None)
+            serializer = BlogSerializer(blog_posts, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({
+                "status": False,
+                "message": "Please provide a search query.",
+                "data": None,
+            })

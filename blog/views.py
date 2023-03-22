@@ -2,6 +2,7 @@ from blog.utils import get_blog_object
 from django.utils import timezone
 from rest_framework.views import APIView
 from blog.models import BlogPost
+from authentication.utils import send_email
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
@@ -187,7 +188,7 @@ class CommentAPIView(APIView):
         blog_post = get_blog_object.get_object(id)
 
         # Get the current user and use their name and email for the comment
-        author = request.user.username
+        commenter = request.user.username
         email = request.user.email
 
         # Get the comment content from the request data
@@ -195,7 +196,7 @@ class CommentAPIView(APIView):
 
         # Create a new comment dict with the data
         comment = {
-            "author": author,
+            "author": commenter,
             "email": email,
             "content": content,
             "blog_post": blog_post.id,
@@ -207,6 +208,7 @@ class CommentAPIView(APIView):
         # Save the comment to the database and return the serialized data
         if serializer.is_valid():
             serializer.save()
+            send_email.send_posted_comment_email(blog_post, content, commenter)
             return Response({
                 "status": True,
                 "message": "Comment posted successfully.",

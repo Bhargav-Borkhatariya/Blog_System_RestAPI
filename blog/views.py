@@ -1,25 +1,17 @@
+from blog.utils import get_blog_object
+from django.utils import timezone
 from rest_framework.views import APIView
 from blog.models import BlogPost
 from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_200_OK,
-    HTTP_404_NOT_FOUND,
+    HTTP_401_UNAUTHORIZED,
 )
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from blog.serializers import BlogSerializer
-
-
-# Custom Permission Class
-class IsAuthor(BasePermission):
-    """
-    Custom permission to allow only the author of a blog post to update it.
-    """
-    def has_object_permission(self, request, view, obj):
-        # Write permissions are only allowed to the author of the blog post.
-        return obj.author == request.user
 
 
 class CreateBlogAPIView(APIView):
@@ -66,7 +58,7 @@ class BlogListAPIView(APIView):
         Returns:
         Response: JSON response containing the serialized blog posts.
         """
-        blogs = BlogPost.objects.filter(status="published")
+        blogs = BlogPost.objects.filter(status="published", deleted_at=None)
         serializer = BlogSerializer(blogs, many=True)
         return Response({
             "status": True,
@@ -81,44 +73,92 @@ class UpdateBlogAPIView(APIView):
 
     Only the author of the blog post is allowed to update it.
     """
-
-    permission_classes = [IsAuthor]
-
-    def get_object(self, id):
-        try:
-            return BlogPost.objects.get(id=id)
-        except BlogPost.DoesNotExist:
-            raise NotFound({
-                "status": False,
-                "message": "Blog Post Does Not Exist.",
-                "data": None
-            }, status=HTTP_404_NOT_FOUND)
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def put(self, request, id):
         """
         Updates a single blog post by ID.
 
         Args:
-            request (Request): A Django REST Framework request object containing the blog post ID and updated data.
+            request (Request): A Django REST Framework request object
+                    containing the blog post ID and updated data.
             pk (int): The ID of the blog post to be updated.
 
         Returns:
-            Response: A JSON response containing the serialized blog post, along with a success message.
+            Response: A JSON response containing the serialized blog post,
+                    along with a success message.
         """
-        blog_post = self.get_object(id)
+        blog_post = get_blog_object.get_object(id)
+        if blog_post.author == request.user:
+            serializer = BlogSerializer(
+                blog_post,
+                data=request.data,
+                partial=True)
+            if serializer.is_valid():
+                serializer.save()
 
-        serializer = BlogSerializer(blog_post, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
+                return Response({
+                    "status": True,
+                    "message": "Blog Post updated successfully.",
+                    "data": serializer.data
+                }, status=HTTP_200_OK)
+            else:
+                return Response({
+                    "status": False,
+                    "error": serializer.errors,
+                    "data": None,
+                }, status=HTTP_400_BAD_REQUEST)
+        else:
+            return Response({
+                    "status": False,
+                    "message": "You Have No Rights to Update.[OnlyAuthor]",
+                    "data": None,
+                }, status=HTTP_401_UNAUTHORIZED)
+
+
+class DeleteBlogAPIView(APIView):
+    """
+    API view that soft deletes a single blog post by ID.
+
+    Only the author of the blog post is allowed to soft delete it.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        """
+        Soft deletes a single blog post by ID.
+
+        Args:
+            request (Request): A Django REST Framework request object
+                    containing the blog post ID.
+            id (int): The ID of the blog post to be soft deleted.
+
+        Returns:
+            Response: A JSON response containing the serialized blog post,
+                    along with a success message.
+        """
+        blog_post = get_blog_object.get_object(id)
+        if blog_post.author == request.user:
+            if blog_post.deleted_at:
+                return Response({
+                    "status": False,
+                    "message": "Blog post has already been soft-deleted.",
+                    "data": None
+                }, status=HTTP_400_BAD_REQUEST)
+
+            blog_post.deleted_at = timezone.now()
+            blog_post.save()
 
             return Response({
                 "status": True,
-                "message": "Blog Post updated successfully.",
-                "data": serializer.data
+                "message": "Blog post soft-deleted successfully.",
+                "data": None
             }, status=HTTP_200_OK)
         else:
             return Response({
-                "status": False,
-                "error": serializer.errors,
-                "data": None,
-            }, status=HTTP_400_BAD_REQUEST)
+                    "status": False,
+                    "message": "You Have No Rights to Delete.[OnlyAuthor]",
+                    "data": None,
+                }, status=HTTP_401_UNAUTHORIZED)

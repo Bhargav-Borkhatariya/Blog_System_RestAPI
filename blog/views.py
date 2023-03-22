@@ -11,7 +11,7 @@ from rest_framework.status import (
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from blog.serializers import BlogSerializer
+from blog.serializers import BlogSerializer, CommentSerializer
 
 
 class CreateBlogAPIView(APIView):
@@ -162,3 +162,59 @@ class DeleteBlogAPIView(APIView):
                     "message": "You Have No Rights to Delete.[OnlyAuthor]",
                     "data": None,
                 }, status=HTTP_401_UNAUTHORIZED)
+
+
+class CommentAPIView(APIView):
+    """
+    API view to handle creation of comments on a blog post.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        """
+        Create a new comment on the specified blog post.
+
+        Args:
+            request: The HTTP request object.
+            post_id: The ID of the blog post to add the comment to.
+
+        Returns:
+            A JSON response with the status of the comment creation
+            and any relevant data.
+
+        """
+        blog_post = get_blog_object.get_object(id)
+
+        # Get the current user and use their name and email for the comment
+        author = request.user.username
+        email = request.user.email
+
+        # Get the comment content from the request data
+        content = request.data.get('comment')
+
+        # Create a new comment dict with the data
+        comment = {
+            "author": author,
+            "email": email,
+            "content": content,
+            "blog_post": blog_post.id,
+        }
+
+        # Serialize the comment data
+        serializer = CommentSerializer(data=comment)
+
+        # Save the comment to the database and return the serialized data
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "status": True,
+                "message": "Comment posted successfully.",
+                "data": None,
+            }, status=HTTP_201_CREATED)
+        else:
+            return Response({
+                "status": False,
+                "error": serializer.errors,
+                "data": None,
+            }, status=HTTP_400_BAD_REQUEST)

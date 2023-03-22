@@ -5,6 +5,7 @@ from blog.views import (
     UpdateBlogAPIView,
     DeleteBlogAPIView,
     CommentAPIView,
+    SearchAPIView,
 )
 urlpatterns = [
     # Creat-blog API endpoint
@@ -31,4 +32,9 @@ urlpatterns = [
     path("implement-comment/<int:id>/",
          CommentAPIView.as_view(),
          name="implementcomment"),
+
+    # Search Blogs API endpoint
+    path("search-blogs/",
+         SearchAPIView.as_view(),
+         name="searchblogs"),
 ]

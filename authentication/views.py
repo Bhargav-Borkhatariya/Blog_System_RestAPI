@@ -106,14 +106,6 @@ class VerifyActivationOtpView(APIView):
         # Get the user associated with the user activation entry
         user = user_activation_otp.user
 
-        # Delete the old auth token
-        token = Token.objects.filter(user=user).first()
-        if token:
-            token.delete()
-
-        # Generate a new auth token for the user
-        token = Token.objects.create(user=user)
-
         # Update the user activation status to True
         user.is_active = True
         user.save()
@@ -122,7 +114,7 @@ class VerifyActivationOtpView(APIView):
         return Response({
             "status": True,
             "message": "OTP is Verified Successfully.",
-            "data": {"token": token.key},
+            "data": None,
         }, status=HTTP_200_OK)
 
 
@@ -207,7 +199,6 @@ class EmailLoginAPIView(APIView):
 
                     # recover account if the account was soft deleted.
                     user.recover()
-                    
                     return Response({
                         "status": True,
                         "message": "User Login successfully",

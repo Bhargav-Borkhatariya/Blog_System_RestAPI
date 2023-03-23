@@ -11,16 +11,23 @@ from rest_framework.status import (
 )
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from blog.serializers import BlogSerializer, CommentSerializer
 from django.db.models import Q
+
+
+class IsNotSoftDeleted(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return not user.deleted_at
 
 
 class CreateBlogAPIView(APIView):
     """
     API endpoint that allows a logged-in user to create a new blog post.
     """
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = [TokenAuthentication]
+    permission_classes = (IsAuthenticated, IsNotSoftDeleted)
 
     def post(self, request):
         """
@@ -76,7 +83,7 @@ class UpdateBlogAPIView(APIView):
     Only the author of the blog post is allowed to update it.
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, IsNotSoftDeleted)
 
     def put(self, request, id):
         """
@@ -126,7 +133,7 @@ class DeleteBlogAPIView(APIView):
     Only the author of the blog post is allowed to soft delete it.
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, IsNotSoftDeleted)
 
     def delete(self, request, id):
         """
@@ -171,7 +178,7 @@ class CommentAPIView(APIView):
     API view to handle creation of comments on a blog post.
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, IsNotSoftDeleted)
 
     def post(self, request, id):
         """

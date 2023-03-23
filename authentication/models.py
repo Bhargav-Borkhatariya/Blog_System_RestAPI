@@ -9,6 +9,11 @@ class User(AbstractUser):
 
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    # Add a recover method to restore a soft-deleted user account
+    def recover(self):
+        self.deleted_at = None
+        super().save()
+
 
 class ActivationOTP(models.Model):
     """

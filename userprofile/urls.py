@@ -2,6 +2,7 @@ from django.urls import path
 from userprofile.views import (
     UpdateUsernameAPIView,
     UserSoftDeleteAPIView,
+    LogoutAPIView,
 )
 
 urlpatterns = [
@@ -14,4 +15,9 @@ urlpatterns = [
     path("soft-delete-user/",
          UserSoftDeleteAPIView.as_view(),
          name="softdeleteuser"),
+
+    # Logout API endpoint
+    path("logout/",
+         LogoutAPIView.as_view(),
+         name="logout"),
 ]

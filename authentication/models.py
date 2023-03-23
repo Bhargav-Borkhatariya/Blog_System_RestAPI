@@ -1,5 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+
+
+class User(AbstractUser):
+    """
+    Custom User model that extends the default Django User model.
+    """
+
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
 
 class ActivationOTP(models.Model):

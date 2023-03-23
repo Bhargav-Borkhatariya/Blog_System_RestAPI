@@ -15,7 +15,7 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_403_FORBIDDEN,
 )
-from django.contrib.auth.models import User
+from authentication.models import User
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import AllowAny
@@ -186,7 +186,7 @@ class EmailLoginAPIView(APIView):
         email = request.data.get("email")
         password = request.data.get("password")
         if email and password:
-            users = User.objects.filter(email=email)
+            users = User.objects.filter(email=email, deleted_at=None)
             if not users.exists():
                 return Response({
                     "status": False,
@@ -247,7 +247,7 @@ class SendForgetPasswordOtpAPIView(APIView):
         email = request.data.get("email")
 
         if email:
-            users = User.objects.filter(email=email)
+            users = User.objects.filter(email=email, deleted_at=None)
             if not users.exists():
                 return Response({
                     "status": False,

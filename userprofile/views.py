@@ -4,7 +4,8 @@ from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.models import User
+from authentication.models import User
+from django.utils import timezone
 
 
 class UpdateUsernameAPIView(APIView):
@@ -66,6 +67,38 @@ class UpdateUsernameAPIView(APIView):
                 "data": {
                     "new_username": new_username,
                 },
+            },
+            status=HTTP_200_OK,
+        )
+
+
+class UserSoftDeleteAPIView(APIView):
+    """
+    API endpoint that allows a user to soft delete their account.
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if user.deleted_at:
+            return Response(
+                {
+                    "status": False,
+                    "message": "User Account has already been soft-deleted.",
+                    "data": None,
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
+        user.deleted_at = timezone.now()
+        user.save()
+
+        return Response(
+            {
+                "status": True,
+                "message": "Account soft deleted successfully.",
+                "data": None,
             },
             status=HTTP_200_OK,
         )

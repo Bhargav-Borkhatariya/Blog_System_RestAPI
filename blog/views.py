@@ -224,15 +224,29 @@ class CommentAPIView(APIView):
 
 
 class SearchAPIView(APIView):
+    """
+    API View for searching blog posts by title or category name.
+    """
 
     def get(self, request):
-        search_query = request.data.get('search')
-        print(search_query)
+        """
+        Returns a list of blog posts that match the search query.
+
+        Parameters:
+        request (Request): The incoming request object.
+
+        Returns:
+        Response: JSON response containing the list of matching blog posts.
+            Error response if the search query is missing or invalid.
+        """
+
+        search_query = request.query_params.get('search')
+
         if search_query:
             blog_posts = BlogPost.objects.filter(
-                Q(title__icontains=search_query)
+                Q(title__exact=search_query)
                 |
-                Q(category__name__icontains=search_query), deleted_at=None)
+                Q(category__name__exact=search_query),status='published', deleted_at=None)
             serializer = BlogSerializer(blog_posts, many=True)
             return Response(serializer.data)
         else:
@@ -240,4 +254,4 @@ class SearchAPIView(APIView):
                 "status": False,
                 "message": "Please provide a search query.",
                 "data": None,
-            })
+            }, status=HTTP_400_BAD_REQUEST)

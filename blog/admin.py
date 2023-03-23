@@ -1,6 +1,9 @@
 from django.contrib import admin
-from blog.models import BlogPost, Category, Comment
+from .models import BlogPost, Category, Comment
 
+class BlogPostAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'author', 'created_on')
+    list_filter = ('category',)
 
-# Register your models here.
-admin.site.register((BlogPost, Category, Comment))
+admin.site.register(BlogPost, BlogPostAdmin)
+admin.site.register((Category, Comment))

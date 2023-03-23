@@ -6,6 +6,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from authentication.models import User
 from django.utils import timezone
+from django.contrib.auth import logout
 
 
 class UpdateUsernameAPIView(APIView):
@@ -81,6 +82,18 @@ class UserSoftDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """
+        Soft delete the current user's account.
+
+        If the user has already been soft-deleted, return an error response.
+        Otherwise, soft delete the account by setting the `deleted_at` field
+        to the current date and time.
+
+        Returns:
+            A response with a status code of 200 if the account was successfully
+            soft-deleted, or a status code of 400 if the user has already been
+            soft-deleted.
+        """
         user = request.user
         if user.deleted_at:
             return Response(
@@ -98,6 +111,39 @@ class UserSoftDeleteAPIView(APIView):
             {
                 "status": True,
                 "message": "Account soft deleted successfully.",
+                "data": None,
+            },
+            status=HTTP_200_OK,
+        )
+
+
+class LogoutAPIView(APIView):
+    """
+    API endpoint that allows a user to logout and delete their token.
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Log out the current user and delete their token.
+
+        Deletes the user's authentication token and logs them out of the current
+        session.
+
+        Returns:
+            A response with a status code of 200 if the user was successfully logged
+            out, or a status code of 500 if an error occurred.
+        """
+        user = request.user
+        if user.auth_token:
+            user.auth_token.delete()
+        logout(request)
+        return Response(
+            {
+                "status": True,
+                "message": "User logged out successfully.",
                 "data": None,
             },
             status=HTTP_200_OK,

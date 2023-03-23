@@ -3,6 +3,7 @@ from userprofile.views import (
     UpdateUsernameAPIView,
     UserSoftDeleteAPIView,
     LogoutAPIView,
+    RecoverSoftDeleteAPIView,
 )
 
 urlpatterns = [
@@ -20,4 +21,9 @@ urlpatterns = [
     path("logout/",
          LogoutAPIView.as_view(),
          name="logout"),
+
+    # Recover-Soft-Deleted User API endpoint.
+    path("recover-soft-deleted-user/",
+         RecoverSoftDeleteAPIView.as_view(),
+         name="recoversoftdeleteduser"),
 ]

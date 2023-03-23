@@ -205,6 +205,9 @@ class EmailLoginAPIView(APIView):
                     # Generate auth token and return it in response
                     token = Token.objects.create(user=user)
 
+                    # recover account if the account was soft deleted.
+                    user.recover()
+                    
                     return Response({
                         "status": True,
                         "message": "User Login successfully",

@@ -1,6 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
+from rest_framework.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_200_OK,
+    HTTP_401_UNAUTHORIZED
+    )
 from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -144,6 +148,71 @@ class LogoutAPIView(APIView):
             {
                 "status": True,
                 "message": "User logged out successfully.",
+                "data": None,
+            },
+            status=HTTP_200_OK,
+        )
+
+
+class RecoverSoftDeleteAPIView(APIView):
+    """
+    API endpoint that allows a user to recover their soft-deleted account.
+
+    Soft-deleting an account marks the account as deleted, but does not actually
+    remove it from the database. This API allows the user to recover their account
+    by providing their old password and resetting their deleted_at attribute to None.
+
+    If the user provides an incorrect password, this API will return a 401 Unauthorized
+    response.
+
+    If the soft-delete has already been recovered, this API will return a 400 Bad Request
+    response.
+
+    If the account recovery is successful, the API will return a 200 OK response with
+    a JSON payload containing a success message.
+
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password')
+        if not old_password:
+            return Response({
+                "status": False,
+                "message": "Please provide your old password.",
+                "data": None,
+            }, status=HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.check_password(old_password):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Old password is incorrect.",
+                    "data": None,
+                },
+                status=HTTP_401_UNAUTHORIZED,
+            )
+
+        if not user.deleted_at:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Account has not been soft-deleted.",
+                    "data": None,
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        user.deleted_at = None
+        user.save()
+
+        return Response(
+            {
+                "status": True,
+                "message": "Account recovery successful.",
                 "data": None,
             },
             status=HTTP_200_OK,

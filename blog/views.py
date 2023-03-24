@@ -12,6 +12,16 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from blog.serializers import BlogSerializer, CommentSerializer
 from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
+
+
+class BlogPostPagination(PageNumberPagination):
+    """
+    Custom pagination class for blog posts.
+    """
+
+    # Set the number of items to display per page
+    page_size = 1
 
 
 class BlogAPISet1View(APIView):
@@ -59,16 +69,28 @@ class BlogAPISet1View(APIView):
 
     def get(self, request):
         """
-        Retrieve all published blog posts with comments.
+        Retrieve all published blog posts with comments using pagination.
 
         Returns:
         Response: JSON response containing the serialized blog posts and their comments.
         """
+        # Retrieve all published blog posts
         blogs = BlogPost.objects.filter(status="published", deleted_at=False)
-        serializer = BlogSerializer(blogs, many=True)
+
+        # Instantiate the paginator
+        paginator = BlogPostPagination()
+
+        # Get the paginated result page based on the requested page number
+        result_page = paginator.paginate_queryset(blogs, request)
+
+        # Serialize the paginated blog posts using BlogSerializer
+        serializer = BlogSerializer(result_page, many=True)
+
+        # Initialize an empty list to hold the serialized blog posts with comments
         data = []
+
+        # Iterate over each serialized blog post and retrieve its comments
         for blog in serializer.data:
-            # Retrieve all comments for the current blog post
             comments = Comment.objects.filter(blog_post=blog["id"])
 
             # Serialize the comments using CommentSerializer
@@ -80,14 +102,13 @@ class BlogAPISet1View(APIView):
             # Append the updated blog post dictionary to the data list
             data.append(blog)
 
-        # Return a JSON response containing all published blog posts and their comments
-        return Response(
+        # Return a paginated JSON response containing the serialized blog posts and their comments
+        return paginator.get_paginated_response(
             {
                 "status": True,
                 "message": "All Published Posts Are Listed Below",
                 "data": data,
-            },
-            status=HTTP_200_OK,
+            }
         )
 
 
@@ -288,9 +309,14 @@ class SearchAPIView(APIView):
                 status="published",
                 deleted_at=False,
             )
+        # Instantiate the paginator
+        paginator = BlogPostPagination()
 
-        # Serialize the retrieved blog posts using the BlogSerializer
-        serializer = BlogSerializer(blog_posts, many=True)
+        # Get the paginated result page based on the requested page number
+        result_page = paginator.paginate_queryset(blog_posts, request)
+
+        # Serialize the paginated blog posts using BlogSerializer
+        serializer = BlogSerializer(result_page, many=True)
 
         # Loop through each blog post and retrieve its associated comments using CommentSerializer
         data = []
@@ -306,11 +332,10 @@ class SearchAPIView(APIView):
         else:
             message = "List of blogs"
 
-        return Response(
+        return paginator.get_paginated_response(
             {
                 "status": True,
                 "message": message,
                 "data": data,
-            },
-            status=HTTP_200_OK,
+            }
         )

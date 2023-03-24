@@ -1,6 +1,6 @@
 from blog.utils import get_blog_object
 from rest_framework.views import APIView
-from blog.models import BlogPost
+from blog.models import BlogPost, Comment
 from authentication.utils import send_email
 from rest_framework.status import (
     HTTP_201_CREATED,
@@ -59,18 +59,33 @@ class BlogAPISet1View(APIView):
 
     def get(self, request):
         """
-        Retrieve all published blog posts.
+        Retrieve all published blog posts with comments.
 
         Returns:
-        Response: JSON response containing the serialized blog posts.
+        Response: JSON response containing the serialized blog posts and their comments.
         """
         blogs = BlogPost.objects.filter(status="published", deleted_at=False)
         serializer = BlogSerializer(blogs, many=True)
+        data = []
+        for blog in serializer.data:
+            # Retrieve all comments for the current blog post
+            comments = Comment.objects.filter(blog_post=blog["id"])
+
+            # Serialize the comments using CommentSerializer
+            comment_serializer = CommentSerializer(comments, many=True)
+
+            # Add the serialized comments to the current blog post dictionary
+            blog["comments"] = comment_serializer.data
+
+            # Append the updated blog post dictionary to the data list
+            data.append(blog)
+
+        # Return a JSON response containing all published blog posts and their comments
         return Response(
             {
                 "status": True,
-                "message": "All Published Post Are listed below",
-                "data": serializer.data,
+                "message": "All Published Posts Are Listed Below",
+                "data": data,
             },
             status=HTTP_200_OK,
         )
@@ -245,8 +260,7 @@ class BlogAPISet2View(APIView):
 class SearchAPIView(APIView):
     """
     API View for searching blog posts by title or category name.
-    """
-
+        """
     def get(self, request):
         """
         Returns a list of blog posts that match the search query.
@@ -262,29 +276,41 @@ class SearchAPIView(APIView):
         search_query = request.query_params.get("search")
 
         if search_query:
+            # If a search query is provided, filter the BlogPost objects based on the query
             blog_posts = BlogPost.objects.filter(
                 Q(title__exact=search_query) | Q(category__name__exact=search_query),
                 status="published",
                 deleted_at=False,
             )
-            serializer = BlogSerializer(blog_posts, many=True)
-            return Response({
-                    "status": True,
-                    "message": f"Result For this '{search_query}'",
-                    "data": serializer.data,
-                },
-                status=HTTP_200_OK,)
         else:
+            # Otherwise, retrieve all published blog posts
             blog_posts = BlogPost.objects.filter(
                 status="published",
                 deleted_at=False,
             )
-            serializer = BlogSerializer(blog_posts, many=True)
-            return Response(
-                {
-                    "status": True,
-                    "message": "List of blogs",
-                    "data": serializer.data,
-                },
-                status=HTTP_200_OK,
-            )
+
+        # Serialize the retrieved blog posts using the BlogSerializer
+        serializer = BlogSerializer(blog_posts, many=True)
+
+        # Loop through each blog post and retrieve its associated comments using CommentSerializer
+        data = []
+        for blog in serializer.data:
+            comments = Comment.objects.filter(blog_post=blog["id"])
+            comment_serializer = CommentSerializer(comments, many=True)
+            blog["comments"] = comment_serializer.data
+            data.append(blog)
+
+        # Return a JSON response containing all matching blog posts and their comments
+        if search_query:
+            message = f"Result for '{search_query}'"
+        else:
+            message = "List of blogs"
+
+        return Response(
+            {
+                "status": True,
+                "message": message,
+                "data": data,
+            },
+            status=HTTP_200_OK,
+        )

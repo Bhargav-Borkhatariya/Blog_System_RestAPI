@@ -1,5 +1,5 @@
 from django.db import models
-from authentication.models import User
+from django.contrib.auth.models import User
 
 
 class Category(models.Model):
@@ -28,6 +28,7 @@ class BlogPost(models.Model):
         status (CharField): The status of the blog post, either "draft" or "published".
         created_on (DateTimeField): The date and time when the blog post was created.
         updated_on (DateTimeField): The date and time when the blog post was last updated.
+        deleted_at (BooleanField): By default sete as false.
     """
 
     STATUS_CHOICES = (
@@ -43,7 +44,7 @@ class BlogPost(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
-    deleted_at = models.BooleanField(default=None)
+    deleted_at = models.BooleanField(default=False, null=True)
 
     class Meta:
         ordering = ['-created_on']

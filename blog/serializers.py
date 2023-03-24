@@ -37,7 +37,7 @@ class BlogSerializer(serializers.ModelSerializer):
 
         # Retrieve the Category instance using the provided category name
         category_name = validated_data.get('category', instance.category.name)
-        category = Category.objects.get(name=category_name)
+        category = Category.objects.get_or_create(name=category_name)[0]
         instance.category = category
 
         # Save the updated instance

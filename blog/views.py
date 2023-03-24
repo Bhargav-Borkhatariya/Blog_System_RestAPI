@@ -14,9 +14,13 @@ from blog.serializers import BlogSerializer, CommentSerializer
 from django.db.models import Q
 
 
-class CreateBlogAPIView(APIView):
+class BlogAPISet1View(APIView):
     """
+    (1)
     API endpoint that allows a logged-in user to create a new blog post.
+
+    (2)
+    And also provide list of published blogs.
     """
 
     authentication_classes = [TokenAuthentication]
@@ -53,12 +57,6 @@ class CreateBlogAPIView(APIView):
             status=HTTP_400_BAD_REQUEST,
         )
 
-
-class BlogListAPIView(APIView):
-    """
-    API endpoint that allows to get all published blog posts.
-    """
-
     def get(self, request):
         """
         Retrieve all published blog posts.
@@ -66,7 +64,7 @@ class BlogListAPIView(APIView):
         Returns:
         Response: JSON response containing the serialized blog posts.
         """
-        blogs = BlogPost.objects.filter(status="published", deleted_at=None)
+        blogs = BlogPost.objects.filter(status="published", deleted_at=False)
         serializer = BlogSerializer(blogs, many=True)
         return Response(
             {
@@ -78,11 +76,20 @@ class BlogListAPIView(APIView):
         )
 
 
-class UpdateBlogAPIView(APIView):
+class BlogAPISet2View(APIView):
     """
+    (1)
     API view that allows updating a single blog post by ID.
 
     Only the author of the blog post is allowed to update it.
+
+    (2)
+    API view that soft deletes a single blog post by ID.
+
+    Only the author of the blog post is allowed to soft delete it.
+
+    (3)
+    API view to handle creation of comments on a blog post.
     """
 
     authentication_classes = [TokenAuthentication]
@@ -133,16 +140,6 @@ class UpdateBlogAPIView(APIView):
                 status=HTTP_401_UNAUTHORIZED,
             )
 
-
-class DeleteBlogAPIView(APIView):
-    """
-    API view that soft deletes a single blog post by ID.
-
-    Only the author of the blog post is allowed to soft delete it.
-    """
-
-    authentication_classes = [TokenAuthentication]
-
     def delete(self, request, id):
         """
         Soft deletes a single blog post by ID.
@@ -188,14 +185,6 @@ class DeleteBlogAPIView(APIView):
                 },
                 status=HTTP_401_UNAUTHORIZED,
             )
-
-
-class CommentAPIView(APIView):
-    """
-    API view to handle creation of comments on a blog post.
-    """
-
-    authentication_classes = [TokenAuthentication]
 
     def post(self, request, id):
         """
@@ -276,14 +265,19 @@ class SearchAPIView(APIView):
             blog_posts = BlogPost.objects.filter(
                 Q(title__exact=search_query) | Q(category__name__exact=search_query),
                 status="published",
-                deleted_at=None,
+                deleted_at=False,
             )
             serializer = BlogSerializer(blog_posts, many=True)
-            return Response(serializer.data)
+            return Response({
+                    "status": True,
+                    "message": f"Result For this '{search_query}'",
+                    "data": serializer.data,
+                },
+                status=HTTP_200_OK,)
         else:
             blog_posts = BlogPost.objects.filter(
                 status="published",
-                deleted_at=None,
+                deleted_at=False,
             )
             serializer = BlogSerializer(blog_posts, many=True)
             return Response(
@@ -292,5 +286,5 @@ class SearchAPIView(APIView):
                     "message": "List of blogs",
                     "data": serializer.data,
                 },
-                status=HTTP_400_BAD_REQUEST,
+                status=HTTP_200_OK,
             )

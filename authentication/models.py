@@ -1,18 +1,22 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 
 
-class User(AbstractUser):
+class SoftDeletedUser(models.Model):
     """
-    Custom User model that extends the default Django User model.
+    Model storing information about something, with a deleted flag.
+
+    Attributes:
+        user: The user associated with this instance.
+        deleted_at: A flag indicating whether this instance has been deleted.
+        deleted_time: show the time when the user has been deleted.
     """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    deleted_at = models.BooleanField(null=True, default=False)
+    deleted_time = models.DateTimeField(auto_now_add=True)
 
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    # Add a recover method to restore a soft-deleted user account
-    def recover(self):
-        self.deleted_at = None
-        super().save()
+    def __str__(self):
+        return f"Dleted UserName {self.user} at {self.deleted_time}"
 
 
 class ActivationOTP(models.Model):

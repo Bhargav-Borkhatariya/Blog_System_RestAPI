@@ -15,7 +15,7 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_403_FORBIDDEN,
 )
-from authentication.models import User
+from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import AllowAny
@@ -178,7 +178,7 @@ class EmailLoginAPIView(APIView):
         email = request.data.get("email")
         password = request.data.get("password")
         if email and password:
-            users = User.objects.filter(email=email, deleted_at=None)
+            users = User.objects.filter(email=email)
             if not users.exists():
                 return Response({
                     "status": False,
@@ -197,8 +197,6 @@ class EmailLoginAPIView(APIView):
                     # Generate auth token and return it in response
                     token = Token.objects.create(user=user)
 
-                    # recover account if the account was soft deleted.
-                    user.recover()
                     return Response({
                         "status": True,
                         "message": "User Login successfully",
@@ -241,7 +239,7 @@ class SendForgetPasswordOtpAPIView(APIView):
         email = request.data.get("email")
 
         if email:
-            users = User.objects.filter(email=email, deleted_at=None)
+            users = User.objects.filter(email=email)
             if not users.exists():
                 return Response({
                     "status": False,
@@ -342,8 +340,7 @@ class UpdatePasswordAPIView(APIView):
     API View for updating user password.
     """
 
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = [TokenAuthentication]
 
     def post(self, request):
         """

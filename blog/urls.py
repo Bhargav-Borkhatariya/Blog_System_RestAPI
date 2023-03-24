@@ -1,37 +1,19 @@
 from django.urls import path
 from blog.views import (
-    CreateBlogAPIView,
-    BlogListAPIView,
-    UpdateBlogAPIView,
-    DeleteBlogAPIView,
-    CommentAPIView,
+    BlogAPISet1View,
+    BlogAPISet2View,
     SearchAPIView,
 )
 urlpatterns = [
-    # Creat-blog API endpoint
-    path("create-blog/",
-         CreateBlogAPIView.as_view(),
-         name="createblog"),
+    # User's Blog API for create and list blog API endpoint
+    path("blog-api-set1/",
+         BlogAPISet1View.as_view(),
+         name="blogapiset1"),
 
-    # List-blogs Published API endpoint
-    path("list-all-blogs/",
-         BlogListAPIView.as_view(),
-         name="listallblogs"),
-
-    # Update Blog API endpoint
-    path("update-blog/<int:id>/",
-         UpdateBlogAPIView.as_view(),
-         name="updateblog"),
-
-    # Soft Delete Blog API endpoint
-    path("soft-delete-blog/<int:id>/",
-         DeleteBlogAPIView.as_view(),
-         name="softdeleteblog"),
-
-    # Comment Blog API endpoint
-    path("implement-comment/<int:id>/",
-         CommentAPIView.as_view(),
-         name="implementcomment"),
+    # User's Blog API for update, delete and comment on blog API endpoint
+    path("blog-api-set2/<int:id>/",
+         BlogAPISet2View.as_view(),
+         name="blogapiset2"),
 
     # Search Blogs API endpoint
     path("search-blogs/",

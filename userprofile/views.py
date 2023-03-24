@@ -6,10 +6,8 @@ from rest_framework.status import (
     HTTP_401_UNAUTHORIZED
     )
 from django.contrib.auth.models import User
+from authentication.models import SoftDeletedUser
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-from authentication.models import User
-from django.utils import timezone
 from django.contrib.auth import logout
 
 
@@ -19,7 +17,6 @@ class UpdateUsernameAPIView(APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def put(self, request):
         """
@@ -83,7 +80,6 @@ class UserSoftDeleteAPIView(APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """
@@ -99,6 +95,7 @@ class UserSoftDeleteAPIView(APIView):
             soft-deleted.
         """
         user = request.user
+        user = SoftDeletedUser.objects.get(user=user)
         if user.deleted_at:
             return Response(
                 {
@@ -108,7 +105,7 @@ class UserSoftDeleteAPIView(APIView):
                 },
                 status=HTTP_400_BAD_REQUEST,
             )
-        user.deleted_at = timezone.now()
+        user.deleted_at = True
         user.save()
 
         return Response(
@@ -127,7 +124,6 @@ class LogoutAPIView(APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """
@@ -173,9 +169,6 @@ class RecoverSoftDeleteAPIView(APIView):
 
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
         old_password = request.data.get('old_password')
         if not old_password:
@@ -206,7 +199,7 @@ class RecoverSoftDeleteAPIView(APIView):
                 status=HTTP_400_BAD_REQUEST,
             )
 
-        user.deleted_at = None
+        user.deleted_at = False
         user.save()
 
         return Response(

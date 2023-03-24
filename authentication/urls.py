@@ -18,7 +18,7 @@ urlpatterns = [
     # User Verify OTP for Activation API endpoint
     path("verify-activationotp/",
          VerifyActivationOtpView.as_view(),
-         name="verify-activationotp"), 
+         name="verify-activationotp"),
 
     # Activate-Account API endpoint
     path("sendotp-activation/",

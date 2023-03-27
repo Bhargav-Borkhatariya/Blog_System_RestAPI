@@ -281,6 +281,12 @@ class SendForgetPasswordOtpAPIView(APIView):
                     "message": "User is not active",
                     "data": None,
                 }, status=HTTP_403_FORBIDDEN)
+        else:
+            return Response({
+                    "status": False,
+                    "message": "Missing email field",
+                    "data": None,
+                }, status=HTTP_400_BAD_REQUEST)
 
 
 class VerifyforgetPassOtpView(APIView):

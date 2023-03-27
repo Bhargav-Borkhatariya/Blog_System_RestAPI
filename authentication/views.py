@@ -154,6 +154,12 @@ class SendOtpAcivationAPIView(APIView):
                 "message": "OTP sent successfully",
                 "data": None,
             }, status=HTTP_200_OK)
+        else:
+            return Response({
+                    "status": False,
+                    "message": "Missing email field",
+                    "data": None,
+                }, status=HTTP_400_BAD_REQUEST)
 
 
 class EmailLoginAPIView(APIView):
@@ -218,7 +224,7 @@ class EmailLoginAPIView(APIView):
                     "status": False,
                     "message": "Missing email or password field",
                     "data": None,
-                }, status=HTTP_401_UNAUTHORIZED)
+                }, status=HTTP_400_BAD_REQUEST)
 
 
 class SendForgetPasswordOtpAPIView(APIView):

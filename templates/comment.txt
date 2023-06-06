@@ -1,0 +1,8 @@
+Hi {{ author }},
+
+Your post "{{ post_title }}" has a new comment:
+
+Comment: {{ content }} By {{ commenter }}
+
+Best regards,
+Bhargav Borkhatariya - Ajax

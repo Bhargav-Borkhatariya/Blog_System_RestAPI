@@ -1,0 +1,77 @@
+[
+    {
+      "model": "blog.BlogPost",
+      "pk": 1,
+      "fields": {
+        "author": 2,
+        "title": "The Importance of Sleep",
+        "content": "Sleep is an essential part of our daily routine...",
+        "category": 1,
+        "image": "media/blog_images/photo_2023-02-21_23-27-14.jpg",
+        "created_on": "2022-03-19T12:00:00Z",
+        "updated_on": "2022-03-20T10:30:00Z",
+        "deleted_at": false
+      }
+    },
+    {
+      "model": "blog.BlogPost",
+      "pk": 2,
+      "fields": {
+        "author": 2,
+        "title": "10 Tips for a Productive Workday",
+        "content": "We all want to be productive at work...",
+        "category": 2,
+        "image": "media/blog_images/photo_2023-02-21_23-27-14.jpg",
+        "status": "published",
+        "created_on": "2022-03-18T14:00:00Z",
+        "updated_on": "2022-03-19T09:45:00Z",
+        "deleted_at": false
+      }
+    },
+    {
+      "model": "blog.BlogPost",
+      "pk": 3,
+      "fields": {
+        "author": 2,
+        "title": "The Benefits of Yoga",
+        "content": "Yoga is a popular form of exercise that has many health benefits...",
+        "category": 4,
+        "image": "media/blog_images/photo_2023-02-21_23-27-14.jpg",
+        "status": "draft",
+        "created_on": "2022-03-17T10:30:00Z",
+        "updated_on": "2022-03-17T16:20:00Z",
+        "deleted_at": false
+      }
+    },
+    {
+      "model": "blog.BlogPost",
+      "pk": 4,
+      "fields": {
+        "author": 2,
+        "title": "How to Start a Successful Blog",
+        "content": "Blogging is a great way to share your ideas and connect with others...",
+        "category": 5,
+        "image": "media/blog_images/photo_2023-02-21_23-27-14.jpg",
+        "status": "published",
+        "created_on": "2022-03-16T13:45:00Z",
+        "updated_on": "2022-03-17T08:15:00Z",
+        "deleted_at": false
+      }
+    },
+    {
+      "model": "blog.BlogPost",
+      "pk": 5,
+      "fields": {
+        "author": 2,
+        "title": "The Top 5 Tourist Attractions in Paris",
+        "content": "Paris is one of the most popular tourist destinations in the world...",
+        "category": 2,
+        "image": "media/blog_images/photo_2023-02-21_23-27-14.jpg",
+        "status": "published",
+        "created_on": "2022-03-15T11:00:00Z",
+        "updated_on": "2022-03-16T09:30:00Z",
+        "deleted_at": false
+      }
+    }
+  ]
+  

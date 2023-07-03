@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import environ
 import os
 from pathlib import Path
+from django.utils.log import DEFAULT_LOGGING
 
 env = environ.Env(
     # set casting, default value
@@ -33,7 +34,7 @@ SECRET_KEY = "django-insecure-)jl(lbdb2o1-fu9df4s_bm1usj7+1$gp^s&@1w808kp=1ut7jc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     "authentication",
     "blog",
     "userprofile",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -60,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "configuration.urls"
@@ -134,22 +137,16 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# Base url to serve media files  
-MEDIA_URL = '/media/' 
+# Base url to serve media files
+MEDIA_URL = "/media/"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Rest Framework Global Permission Classes
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-    ],
-}
 
 # Email Setup.
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
@@ -158,3 +155,30 @@ EMAIL_PORT = os.environ.get("EMAIL_PORT")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+
+# cors
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ORIGIN_WHITELIST = [
+    "http://192.168.10.147:8001",
+]
+
+
+LOGGING = DEFAULT_LOGGING
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "slack": {
+            "level": "ERROR",
+            "class": "configuration.slack_logger.SlackExceptionHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["slack"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+    },
+}
